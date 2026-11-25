@@ -1,0 +1,65 @@
+# IML container inspection - 4 corner cameras, one container per machine cycle (3-10 s)
+
+product: medium            # small | medium | large -> model file models/<product>.json
+models_dir: models
+teach_dir: teach_images
+
+cameras:
+  backend: mindvision      # mindvision | opencv (USB webcam) | files (replay samples/<camera>/)
+  trigger: hardware        # hardware: machine/PLC/photo-sensor pulse on camera trigger input (recommended)
+                           # software: this program triggers every software_trigger_interval_s
+  software_trigger_interval_s: 5.0
+  grab_timeout_ms: 12000   # > longest machine cycle (10 s)
+  exposure_us: 2000        # short exposure = no motion blur on a moving belt; add LED light
+  gain: null
+  files_dir: samples
+  devices:                 # use serial numbers (python main.py list-cameras) so cameras never swap
+    - name: cam1_front_left
+      serial: ""
+      index: 0
+      roi: null            # [x, y, w, h] crop around the container, speeds up and avoids background
+    - name: cam2_front_right
+      serial: ""
+      index: 1
+      roi: null
+    - name: cam3_back_left
+      serial: ""
+      index: 2
+      roi: null
+    - name: cam4_back_right
+      serial: ""
+      index: 3
+      roi: null
+
+# Detection settings shared by all cameras (defaults are in inspection/detector.py)
+inspection:
+  label_hsv_low: [86, 150, 60]     # cyan IML label (OpenCV HSV: H 0-180)
+  label_hsv_high: [108, 255, 255]
+  lid_hsv_low: [5, 35, 120]        # cream lid
+  lid_hsv_high: [35, 150, 255]
+  dark_v_max: 60                   # black specks
+  foreign_s_min: 60                # pink / red / brown contamination
+  min_spot_area_px: 25             # smallest spot that rejects (at 1000 px image width)
+  min_lid_fill: 0.35
+  min_label_solidity: 0.88
+  z_max: 4.0                       # learned model tolerance (higher = less strict)
+  check_bare_area: false           # true only with white LED lighting
+
+# Per-product overrides (the 3 sizes on the drawing)
+products:
+  small:  {min_spot_area_px: 15}   # top 64 mm, height 67 mm
+  medium: {}                       # top 114 mm, bottom 92 mm, height 106-107 mm
+  large:  {}                       # top 135 mm, bottom 108 mm, height 132-135 mm
+
+reject:
+  type: none               # none | camera_io | serial | modbus_tcp
+  delay_ms: 0              # time for container to travel from cameras to the pusher
+  pulse_ms: 200
+  # camera_io:  camera: 0, output_index: 0
+  # serial:     port: COM3, baud: 9600, on_hex: A00101A2, off_hex: A00100A1
+  # modbus_tcp: host: 192.168.1.10, port: 502, coil: 0, unit: 1
+
+output:
+  save_dir: results        # CSV log per day + images of every reject
+  save_good_images: false
+  show_window: true        # 2x2 live view with counters

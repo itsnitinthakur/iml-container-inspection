@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+results/
+teach_images/
+check_out/
+samples/
+mvsdk.py
+.pytest_cache/

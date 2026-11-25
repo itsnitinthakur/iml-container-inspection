@@ -1,0 +1,6 @@
+opencv-python>=4.8
+numpy>=1.24
+PyYAML>=6.0
+# optional reject outputs
+# pyserial>=3.5
+# pymodbus>=3.6
